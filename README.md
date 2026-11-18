@@ -138,12 +138,6 @@ python mutation_check.py                          # can the tests actually fail?
 - The dashboard has been tested for correct behaviour in a fake browser, but its layout has not been checked on every browser
   and screen size.
 
-## AI assistance
-
-This project was developed with substantial AI assistance (Claude, by Anthropic) for code, tests and documentation.
-Everything here is reproducible: run the tests, the stress test and the experiments yourself rather than taking the
-numbers on trust.
-
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md). Ideas: job dependencies, machine failures, a real-trace loader, a cgroups demo that
