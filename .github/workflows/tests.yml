@@ -1,0 +1,27 @@
+name: tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Unit tests (includes the dashboard's JavaScript, run in Node.js)
+        run: python -m unittest discover -v -s tests -t .
+      - name: Stress test (random scenarios, self-check + independent referee)
+        run: python stress_test.py --cases 300
+      - name: Headline experiment
+        run: python -m minicloudos compare --workload convoy

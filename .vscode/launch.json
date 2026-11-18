@@ -1,0 +1,20 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    { "name": "Demo tour (step by step)", "type": "debugpy", "request": "launch", "program": "${workspaceFolder}/demo.py",
+      "args": ["--step"], "console": "integratedTerminal", "cwd": "${workspaceFolder}" },
+    { "name": "Demo tour (all at once)", "type": "debugpy", "request": "launch", "program": "${workspaceFolder}/demo.py",
+      "console": "integratedTerminal", "cwd": "${workspaceFolder}" },
+    { "name": "Compare schedulers (asks which command)", "type": "debugpy", "request": "launch", "module": "minicloudos",
+      "args": "${input:cliArgs}", "console": "integratedTerminal", "cwd": "${workspaceFolder}" },
+    { "name": "Stress test", "type": "debugpy", "request": "launch", "program": "${workspaceFolder}/stress_test.py",
+      "console": "integratedTerminal", "cwd": "${workspaceFolder}" },
+    { "name": "All tests", "type": "debugpy", "request": "launch", "module": "unittest",
+      "args": ["discover", "-v", "-s", "tests", "-t", "."], "console": "integratedTerminal", "cwd": "${workspaceFolder}" }
+  ],
+  "inputs": [
+    { "id": "cliArgs", "type": "promptString",
+      "description": "Arguments, for example:  compare --workload convoy   or   dashboard --workload bursty   or   --help",
+      "default": "compare --workload convoy" }
+  ]
+}

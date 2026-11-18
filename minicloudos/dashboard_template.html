@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MiniCloudOS dashboard</title>
+<style>
+:root { --bg:#f5f4ef; --card:#ffffff; --text:#1d2630; --muted:#6b7480; --accent:#2f6fdf; --warn:#d1493f; --grid:#0001; --line:#e2dfd6; --best:#e4f3ea; --sel:#e8effc; }
+@media (prefers-color-scheme: dark) {
+  :root { --bg:#14181d; --card:#1d242c; --text:#e8ebef; --muted:#97a1ad; --accent:#6c9cf5; --warn:#f07b72; --grid:#fff2; --line:#2d3640; --best:#1d3a2c; --sel:#233350; }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
+header { padding: 20px 24px 4px; }
+h1 { margin: 0; font-size: 24px; }
+h2 { margin: 0 0 10px; font-size: 17px; }
+h2 small { font-weight: normal; color: var(--muted); font-size: 13px; }
+#subtitle { margin: 4px 0 0; color: var(--muted); }
+main { display: grid; gap: 16px; padding: 16px 24px 32px; max-width: 1200px; margin: 0 auto; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
+.scroll { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+th, td { padding: 6px 10px; text-align: right; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th:first-child, td.name { text-align: left; }
+th { font-size: 13px; color: var(--muted); font-weight: 600; cursor: help; }
+tr[data-run] { cursor: pointer; }
+tr[data-run]:hover { background: var(--sel); }
+tr.sel { background: var(--sel); font-weight: 600; }
+td.best { background: var(--best); font-weight: 700; }
+.controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 12px; }
+.controls input[type=range] { flex: 1 1 260px; }
+button, select { font: inherit; padding: 5px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--card); color: var(--text); cursor: pointer; }
+button:hover { border-color: var(--accent); }
+#machines { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+.machine { border: 1px solid var(--line); border-radius: 10px; padding: 10px; }
+.machine.booting { opacity: .65; border-style: dashed; }
+.machine.removed { opacity: .35; }
+.mhead { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.mhead span { color: var(--muted); font-size: 13px; }
+.tag { margin-left: auto; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+.bar { height: 10px; background: var(--line); border-radius: 5px; overflow: hidden; margin: 8px 0 4px; }
+.fill { height: 100%; background: var(--accent); }
+.mfoot { color: var(--muted); font-size: 13px; margin-bottom: 6px; }
+.chips { display: flex; flex-wrap: wrap; gap: 4px; min-height: 24px; }
+.chip { color: #fff; padding: 2px 8px; border-radius: 12px; font-size: 12px; white-space: nowrap; }
+.chip small { opacity: .85; }
+.more, .idle { color: var(--muted); font-size: 13px; }
+#legend { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+canvas { width: 100%; height: auto; display: block; cursor: pointer; }
+#bars { cursor: default; }
+.two { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); }
+.note { color: var(--muted); font-size: 13px; margin-top: 6px; }
+</style>
+</head>
+<body>
+<header><h1 id="title">MiniCloudOS</h1><p id="subtitle"></p></header>
+<main>
+  <section class="card">
+    <h2>Compare the schedulers <small>(click a row to replay it; the best value in each column is highlighted; hover a heading for its meaning)</small></h2>
+    <div class="scroll"><table id="table"></table></div>
+    <div id="legend"></div>
+    <p class="note">Job colours show which tenant (team) submitted them.</p>
+  </section>
+
+  <section class="card">
+    <h2>Replay: <span id="scheduler-name"></span></h2>
+    <div class="controls">
+      <label>Scheduler <select id="scheduler"></select></label>
+      <button id="step-back" title="back one tick">&#9664;</button>
+      <button id="play">Play</button>
+      <button id="step-forward" title="forward one tick">&#9654;</button>
+      <label>Speed <select id="speed"><option value="1">1 tick</option><option value="5" selected>5 ticks</option><option value="20">20 ticks</option><option value="60">60 ticks</option></select></label>
+      <span id="tick-label"></span>
+    </div>
+    <div class="controls"><input id="slider" type="range" min="0" max="100" value="0" aria-label="time"></div>
+    <div id="machines"></div>
+    <h2 id="queue-title" style="margin-top:14px">Waiting</h2>
+    <div id="queue" class="chips"></div>
+  </section>
+
+  <div class="two">
+    <section class="card">
+      <h2>Cluster load over time <small>(click to jump)</small></h2>
+      <canvas id="series" width="900" height="300"></canvas>
+      <p class="note">Filled area: cores in use. Grey line: cores the cluster has. Red line: jobs waiting (right axis).</p>
+    </section>
+    <section class="card">
+      <h2>Schedulers side by side: <span id="bars-title"></span></h2>
+      <p><label>Metric <select id="metric"></select></label></p>
+      <canvas id="bars" width="900" height="300"></canvas>
+    </section>
+  </div>
+</main>
+<script type="application/json" id="mc-data">__DATA__</script>
+<script id="mc-core">__CORE__</script>
+<script id="mc-ui">__UI__</script>
+</body>
+</html>

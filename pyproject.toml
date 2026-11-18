@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "minicloudos"
+version = "1.0.0"
+description = "A cloud resource scheduler simulator: compare schedulers, placement and autoscaling, with a browser dashboard"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+keywords = ["scheduler", "operating-systems", "cloud", "simulation", "autoscaling", "education"]
+classifiers = [
+  "Intended Audience :: Education",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Topic :: System :: Distributed Computing",
+]
+
+[project.scripts]
+minicloudos = "minicloudos.__main__:main"
+
+[tool.setuptools]
+packages = ["minicloudos"]
+
+[tool.setuptools.package-data]
+minicloudos = ["*.js", "*.html"]

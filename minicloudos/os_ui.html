@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MiniCloudOS</title>
+<style>
+:root{--accent:#c2410c;--pad:12px;--font:ui-monospace,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;--sh:#1c1b18}
+[data-theme=paper]{--desk:#b9b3a0;--dot:#a39d89;--win:#f1ecdd;--ink:#1c1b18;--mute:#6f6a5c;--soft:#e2dccb;--bar:#d6cfba;--warn:#b3261e;--sh:#1c1b18}
+[data-theme=graphite]{--desk:#1d1c19;--dot:#2c2a26;--win:#2e2c27;--ink:#ece6d6;--mute:#a39d8c;--soft:#252420;--bar:#3d3a33;--warn:#ff8a7a;--sh:#000}
+[data-theme=phosphor]{--desk:#050c07;--dot:#0e2013;--win:#0a170d;--ink:#9dff8a;--mute:#56a34a;--soft:#0f2414;--bar:#17331c;--warn:#ffb454;--sh:#020603}
+[data-font=sans]{--font:system-ui,-apple-system,"Segoe UI",sans-serif}
+[data-density=compact]{--pad:6px}
+*{box-sizing:border-box}html,body{height:100%;margin:0;overflow:hidden}
+body{background:var(--desk);background-image:radial-gradient(var(--dot) 1px,transparent 1px);background-size:9px 9px;color:var(--ink);font:13px/1.4 var(--font)}
+[data-scan=on] body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:9999;background:repeating-linear-gradient(0deg,#0000 0 2px,#0003 2px 3px)}
+button,select,input{font:inherit;color:var(--ink);background:var(--win);border:1.5px solid var(--ink);padding:3px 9px;border-radius:0}
+button{cursor:pointer}button:hover,button.on{background:var(--ink);color:var(--win)}
+input[type=range]{padding:0;accent-color:var(--accent)}input[type=number]{width:84px}
+#menubar{position:fixed;inset:0 0 auto;height:28px;background:var(--win);border-bottom:2px solid var(--ink);display:flex;align-items:center;gap:14px;padding:0 10px;z-index:5000}
+#menubar b{cursor:pointer;padding:2px 8px}#menubar b:hover{background:var(--ink);color:var(--win)}
+#status{flex:1;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#menu{position:fixed;top:30px;left:6px;background:var(--win);border:2px solid var(--ink);box-shadow:4px 4px 0 var(--sh);z-index:5001;min-width:200px;display:none}
+#menu div{padding:6px 12px;cursor:pointer}#menu div:hover{background:var(--ink);color:var(--win)}#menu hr{margin:2px 0;border:0;border-top:1.5px solid var(--ink)}
+#icons{position:fixed;top:44px;left:14px;display:grid;gap:14px;z-index:1}
+.icon{width:78px;text-align:center;cursor:pointer;user-select:none}.icon i{display:block;font-style:normal;font-size:26px;width:52px;height:46px;margin:0 auto 3px;line-height:42px;background:var(--win);border:2px solid var(--ink);box-shadow:3px 3px 0 var(--sh)}
+.icon:hover i{background:var(--accent);color:#fff}.icon span{background:var(--win);padding:0 4px;border:1px solid var(--ink)}
+#dock{position:fixed;inset:auto 0 0;height:42px;background:var(--win);border-top:2px solid var(--ink);display:flex;gap:6px;align-items:center;padding:0 10px;z-index:5000}
+#dock button{display:flex;gap:6px;align-items:center;position:relative}#dock button.open::after{content:"";position:absolute;left:6px;right:6px;bottom:-5px;height:3px;background:var(--accent)}
+.win{position:fixed;display:flex;flex-direction:column;background:var(--win);border:2px solid var(--ink);box-shadow:5px 5px 0 var(--sh);min-width:300px;min-height:160px;resize:both;overflow:hidden}
+.win.max{inset:28px 0 42px 0!important;width:auto!important;height:auto!important;resize:none;box-shadow:none}.win.min{display:none}
+.tb{height:26px;flex:none;display:flex;align-items:center;gap:8px;padding:0 6px;border-bottom:2px solid var(--ink);cursor:grab;user-select:none;background:repeating-linear-gradient(var(--ink) 0 1px,transparent 1px 4px)}
+.win:not(.on) .tb{background:none;color:var(--mute)}.tb b{flex:1;text-align:center}.tb b span{background:var(--win);padding:0 10px}
+.tb u{width:14px;height:14px;border:1.5px solid var(--ink);background:var(--win);display:block;cursor:pointer;text-decoration:none;font-size:10px;line-height:11px;text-align:center}.tb u:hover{background:var(--accent);color:#fff}
+.body{flex:1;min-height:0;overflow:auto;padding:var(--pad);display:flex;flex-direction:column;gap:var(--pad)}
+h3{margin:0;font-size:13px;text-transform:uppercase;letter-spacing:.08em}.mute{color:var(--mute)}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.grow{flex:1}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:var(--pad)}
+.tile{border:1.5px solid var(--ink);padding:8px;background:var(--soft)}.tile small{display:block;color:var(--mute)}.tile b{font-size:17px;color:var(--accent)}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}th,td{padding:4px 8px;text-align:right;border-bottom:1px solid var(--bar);white-space:nowrap}
+th{position:sticky;top:0;background:var(--win);border-bottom:2px solid var(--ink);cursor:pointer}th:first-child,td:first-child{text-align:left}
+tr[data-run]{cursor:pointer}tr[data-run]:hover td,tr.sel td{background:var(--soft)}tr.sel td:first-child{box-shadow:inset 4px 0 var(--accent)}td.best{background:var(--accent)!important;color:#fff;font-weight:700}
+.lb{display:grid;grid-template-columns:90px 1fr 60px;gap:8px;align-items:center;cursor:pointer}.lb i{display:block;height:12px;background:var(--accent)}.lb:hover span:first-child{text-decoration:underline}
+.machines{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:var(--pad)}
+.m{border:1.5px solid var(--ink);padding:7px}.m.booting{border-style:dashed;opacity:.6}.m.removed{opacity:.3}.m .bar{height:10px;border:1.5px solid var(--ink);margin:5px 0;background:var(--soft)}.m .bar i{display:block;height:100%;background:var(--accent)}
+.chips{display:flex;flex-wrap:wrap;gap:3px}.chip{color:#fff;padding:0 6px;font-size:11px;white-space:nowrap;border:1px solid #0006}
+.chart{flex:none;height:150px;border:1.5px solid var(--ink);background:var(--soft)}.chart canvas{width:100%;height:100%;display:block;cursor:pointer}
+.field{display:grid;grid-template-columns:150px 1fr;gap:8px;align-items:center}.sw{width:22px;height:22px;padding:0;border:2px solid var(--ink)}.sw.on{outline:3px solid var(--ink);outline-offset:1px}
+fieldset{border:1.5px solid var(--ink);display:grid;gap:9px;padding:10px}legend{padding:0 6px;text-transform:uppercase;letter-spacing:.08em}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:var(--pad)}.card{display:grid;gap:3px;text-align:left;padding:10px;background:var(--soft)}.card:hover span{color:var(--win)}.card b{color:var(--accent)}.card:hover b{color:var(--win)}
+pre.out{flex:1;min-height:80px;margin:0;padding:8px;background:var(--soft);border:1.5px solid var(--ink);overflow:auto;white-space:pre;font:inherit}
+.doc{overflow:auto;min-width:0;padding-left:var(--pad)}.doc h1,.doc h2,.doc h3{margin:14px 0 6px}.doc h1{font-size:20px}.doc h2{font-size:16px;border-bottom:2px solid var(--ink)}.doc p,.doc li{margin:6px 0}.doc code{background:var(--soft);padding:0 4px;border:1px solid var(--bar)}.doc pre{background:var(--soft);border:1.5px solid var(--ink);padding:8px;overflow:auto}.doc a{color:var(--accent)}.doc table{display:block;overflow:auto}
+#dock{overflow-x:auto}
+@media(max-width:760px){#icons{display:none}}
+</style>
+</head>
+<body>
+<div id="menubar"><b id="logo">&#9670; MiniCloudOS</b><span id="status">starting&hellip;</span><span id="clock"></span></div>
+<div id="menu"></div><div id="icons"></div><div id="dock"></div>
+<script src="/core.js"></script>
+<script>
+(function () {
+'use strict';
+var WORKLOADS = __WORKLOADS__;
+var $ = function (s, r) { return (r || document).querySelector(s); };
+var esc = function (s) { return String(s).replace(/[&<>"]/g, function (c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); };
+var HELP = 'Commands (same options as the command line):\n  compare | run | matrix | quantum | autoscale | placement | gantt\n      [--workload convoy|batch|web|bursty|noisy] [--scheduler fcfs|sjf|rr|mlfq|drf|...] [--nodes N] [--jobs N] [--seed N]\n  tests | stress | mutation | demo     verification and the guided tour\n  clear\n';
+var DOCS = __DOCS__;
+function md(src) {
+  var inl = function (t) { return esc(t.replace(/!\[[^\]]*\]\([^)]*\)/g, '')).replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>').replace(/\*([^*\s][^*]*)\*/g, '<i>$1</i>')
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, function (m, a, u) { return /^https?:/.test(u) ? '<a href="' + u + '" target="_blank" rel="noopener">' + a + '</a>' : a; }); };
+  var L = src.split('\n'), o = [], i = 0, m;
+  while (i < L.length) { var l = L[i];
+    if (/^```/.test(l)) { var b = []; i++; while (i < L.length && !/^```/.test(L[i])) b.push(L[i++]); i++; o.push('<pre>' + esc(b.join('\n')) + '</pre>'); }
+    else if ((m = /^(#{1,4})\s+(.*)/.exec(l))) { o.push('<h' + m[1].length + '>' + inl(m[2]) + '</h' + m[1].length + '>'); i++; }
+    else if (/^\|/.test(l) && /^\|[\s:|-]+\|?\s*$/.test(L[i + 1] || '')) { var rows = [l]; i += 2; while (i < L.length && /^\|/.test(L[i])) rows.push(L[i++]);
+      o.push('<table>' + rows.map(function (r, k) { var c = r.replace(/^\||\|\s*$/g, '').split('|'); return '<tr>' + c.map(function (x) { return (k ? '<td>' : '<th>') + inl(x.trim()) + (k ? '</td>' : '</th>'); }).join('') + '</tr>'; }).join('') + '</table>'); }
+    else if (/^\s*([-*]|\d+\.)\s/.test(l)) { var it = []; while (i < L.length && /^\s*([-*]|\d+\.)\s/.test(L[i])) it.push('<li>' + inl(L[i++].replace(/^\s*([-*]|\d+\.)\s/, '')) + '</li>'); o.push('<ul>' + it.join('') + '</ul>'); }
+    else if (/^\s*$/.test(l)) i++;
+    else { var p = []; while (i < L.length && !/^\s*$|^```|^#|^\|/.test(L[i]) && !/^\s*([-*]|\d+\.)\s/.test(L[i])) p.push(L[i++]); o.push('<p>' + inl(p.join(' ')) + '</p>'); } }
+  return o.join('');
+}
+var DEF = {theme:'paper', accent:'#c2410c', font:'mono', density:'cozy', scan:'off', speed:5, workload:'convoy', nodes:4, jobs:'', seed:1, sw:0, auto:false};
+var cfg = Object.assign({}, DEF);
+try { Object.assign(cfg, JSON.parse(localStorage.getItem('mcos') || '{}')); } catch (e) {}
+function save() { try { localStorage.setItem('mcos', JSON.stringify(cfg)); } catch (e) {} }
+function skin() {
+  var r = document.documentElement;
+  r.dataset.theme = cfg.theme; r.dataset.font = cfg.font; r.dataset.density = cfg.density; r.dataset.scan = cfg.scan;
+  r.style.setProperty('--accent', cfg.accent);
+}
+var PAL = ['#b4451a','#4d7c0f','#1f6f78','#a16207','#8a3a62','#55606e','#7c2d12','#3f6212'];
+var tcol = function (t) { return PAL[t % PAL.length]; };
+var D = null, S = {run:0, t:0, playing:false, metric:'mean_slowdown', timer:null, sort:'id', tenant:'all'};
+var run = function () { return D.runs[S.run]; };
+var css = function (n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); };
+function status(t) { $('#status').textContent = t; }
+
+/* ---------- data ---------- */
+function load() {
+  pause(); status('running ' + cfg.workload + ' through every scheduler...');
+  var q = new URLSearchParams({workload:cfg.workload, nodes:cfg.nodes, seed:cfg.seed, switch_cost:cfg.sw, autoscale:cfg.auto ? 1 : 0});
+  if (cfg.jobs) q.set('jobs', cfg.jobs);
+  return fetch('/api/run?' + q).then(function (r) { return r.ok ? r.json() : r.text().then(function (t) { throw new Error(t); }); })
+    .then(function (d) {
+      D = d; D.runs.forEach(MC.indexRun); S.t = 0; S.tenant = 'all';
+      var b = MC.bestPerColumn(D.runs, D.columns); S.run = Math.max(0, b[D.columns.findIndex(function (c) { return c.key === 'mean_slowdown'; })]);
+      status(D.subtitle); all('data');
+    }).catch(function (e) { status('error: ' + e.message); });
+}
+
+/* ---------- charts ---------- */
+function cv(c) { var r = c.getBoundingClientRect(), d = window.devicePixelRatio || 1; c.width = Math.max(10, r.width * d); c.height = Math.max(10, r.height * d);
+  var x = c.getContext('2d'); x.scale(d, d); x.font = '11px ' + css('--font'); return {x:x, w:r.width, h:r.height}; }
+function drawSeries(c) {
+  var g = cv(c), x = g.x, r = run(), s = r.series, n = s.pending.length, P = {l:34, r:34, t:12, b:6}, W = g.w - P.l - P.r, H = g.h - P.t - P.b, i;
+  var mc = MC.niceMax(Math.max.apply(null, s.cap_cpu)), mq = MC.niceMax(Math.max.apply(null, s.pending));
+  var X = function (k) { return P.l + W * k / Math.max(1, n - 1); }, Yc = function (v) { return P.t + H * (1 - v / mc); }, Yq = function (v) { return P.t + H * (1 - v / mq); };
+  x.fillStyle = css('--mute'); x.fillText(mc, 4, P.t + 8); x.fillText('0', 4, P.t + H); x.fillText(mq, g.w - 30, P.t + 8);
+  x.fillStyle = cfg.accent; x.globalAlpha = .55; x.beginPath(); x.moveTo(X(0), Yc(0));
+  for (i = 0; i < n; i++) x.lineTo(X(i), Yc(s.used_cpu[i])); x.lineTo(X(n - 1), Yc(0)); x.fill(); x.globalAlpha = 1;
+  x.strokeStyle = css('--mute'); x.beginPath(); for (i = 0; i < n; i++) x[i ? 'lineTo' : 'moveTo'](X(i), Yc(s.cap_cpu[i])); x.stroke();
+  x.strokeStyle = css('--warn'); x.lineWidth = 2; x.beginPath(); for (i = 0; i < n; i++) x[i ? 'lineTo' : 'moveTo'](X(i), Yq(s.pending[i])); x.stroke();
+  x.strokeStyle = css('--ink'); x.lineWidth = 1.5; var cx = X(Math.min(n - 1, Math.floor(S.t / r.stride))); x.beginPath(); x.moveTo(cx, P.t); x.lineTo(cx, P.t + H); x.stroke();
+}
+function drawBars(c) {
+  var g = cv(c), x = g.x, k = D.columns.filter(function (q) { return q.key === S.metric; })[0], v = D.runs.map(function (r) { return r.metrics[S.metric]; });
+  var top = MC.niceMax(Math.max.apply(null, v) || 1), bw = g.w / v.length, H = g.h - 34;
+  v.forEach(function (val, i) { var h = (H - 6) * val / top, bx = i * bw + bw * .15;
+    x.fillStyle = i === S.run ? cfg.accent : css('--mute'); x.fillRect(bx, H - h + 14, bw * .7, h);
+    x.fillStyle = css('--ink'); x.fillText(MC.format(val, k.fmt), bx, H - h + 10); x.fillText(D.runs[i].name, bx, g.h - 6); });
+}
+
+/* ---------- apps ---------- */
+function table(el) {
+  var best = MC.bestPerColumn(D.runs, D.columns);
+  return '<table><tr><th>scheduler</th>' + D.columns.map(function (c) { return '<th title="' + esc(c.help) + '">' + esc(c.label) + '</th>'; }).join('') + '</tr>' +
+    D.runs.map(function (r, i) { return '<tr data-run="' + i + '" class="' + (i === S.run ? 'sel' : '') + '"><td>' + esc(r.name) + '</td>' +
+      D.columns.map(function (c, ci) { return '<td class="' + (best[ci] === i ? 'best' : '') + '">' + MC.format(r.metrics[c.key], c.fmt) + '</td>'; }).join('') + '</tr>'; }).join('') + '</table>';
+}
+function pickRun(e) { var tr = e.target.closest && e.target.closest('[data-run]'); if (tr) { S.run = +tr.dataset.run; all('run'); } }
+
+var APPS = [
+ {id:'welcome', title:'Welcome', icon:'&#9670;', x:90, y:50, w:700, h:580, static:true, render:function (el) {
+   if (el._w) return; el._w = 1;
+   var card = function (id, h, t) { return '<button class="card" data-open="' + id + '"><b>' + h + '</b><span class="mute">' + t + '</span></button>'; };
+   el.innerHTML = '<div><h2 style="margin:0;font-size:24px">&#9670; MiniCloudOS</h2><div class="mute">A cloud resource scheduler simulator</div></div>' +
+     '<div>Replay the same jobs through eight schedulers, three placement strategies and an autoscaler, and see which one wins. Everything on this site runs live on your own machine.</div>' +
+     '<div class="tiles"><div class="tile"><small>schedulers</small><b>8</b></div><div class="tile"><small>workloads</small><b>5</b></div><div class="tile"><small>automated tests</small><b>76</b></div><div class="tile"><small>dependencies</small><b>0</b></div></div>' +
+     '<h3>Open an app</h3><div class="cards">' + card('overview','Overview','Which scheduler wins?') + card('replay','Replay','Watch machines fill up and the queue drain') + card('compare','Compare','Full table and charts') +
+     card('jobs','Task Manager','Every job, sortable') + card('terminal','Terminal','Run commands, tests, stress test, demo tour') + card('docs','Docs','README, architecture, results') + card('settings','Settings','Theme, look and simulation') + '</div>';
+   el.addEventListener('click', function (e) { var b = e.target.closest('[data-open]'); if (b) open(b.dataset.open); }); }},
+ {id:'overview', title:'Overview', icon:'&#9636;', x:90, y:50, w:560, h:430, render:function (el, k) {
+   if (!D) return; var best = MC.bestPerColumn(D.runs, D.columns), ci = function (key) { return D.columns.findIndex(function (c) { return c.key === key; }); };
+   var tiles = [['Lowest slowdown','mean_slowdown'],['Shortest wait','mean_wait'],['Fairest','fairness'],['Most useful CPU','cpu_useful'],['Fastest finish','makespan'],['Cheapest','node_ticks']].map(function (t) {
+     var i = ci(t[1]), r = D.runs[best[i]]; return '<div class="tile"><small>' + t[0] + '</small><b>' + esc(r.name) + '</b><small>' + MC.format(r.metrics[t[1]], D.columns[i].fmt) + '</small></div>'; }).join('');
+   var sl = D.runs.map(function (r, i) { return [r, i]; }).sort(function (a, b) { return a[0].metrics.mean_slowdown - b[0].metrics.mean_slowdown; }), mx = Math.max.apply(null, sl.map(function (p) { return p[0].metrics.mean_slowdown; }));
+   el.innerHTML = '<div><h3>' + esc(D.title) + '</h3><div class="mute">' + esc(D.subtitle) + '</div></div><div class="tiles">' + tiles + '</div>' +
+     '<h3>Slowdown ranking <span class="mute">(lower is better, click to replay)</span></h3>' + sl.map(function (p) { return '<div class="lb" data-run="' + p[1] + '"><span>' + (p[1] === S.run ? '&#9656; ' : '') + esc(p[0].name) + '</span><i style="width:' + Math.max(2, 100 * p[0].metrics.mean_slowdown / mx) + '%"></i><span>' + p[0].metrics.mean_slowdown.toFixed(2) + '</span></div>'; }).join('') +
+     '<div class="chips">' + D.tenants.map(function (t, i) { return '<span class="chip" style="background:' + tcol(i) + '">' + esc(t) + '</span>'; }).join('') + '</div>';
+   if (!el._w) { el._w = 1; el.addEventListener('click', pickRun); } }},
+
+ {id:'replay', title:'Replay', icon:'&#9654;', x:420, y:80, w:680, h:540, render:function (el, k) {
+   if (!D) return; var r = run();
+   if (!el._w) { el._w = 1; el.innerHTML = '<div class="row"><select class="sch"></select><button class="bk">&#9664;</button><button class="pl">Play</button><button class="fw">&#9654;</button><span class="tk mute"></span></div>' +
+     '<input class="sl" type="range" min="0" value="0"><div class="machines"></div><h3 class="qt"></h3><div class="chips q"></div><div class="chart"><canvas></canvas></div>';
+     el.addEventListener('input', function (e) { if (e.target.classList.contains('sl')) setTick(+e.target.value); });
+     el.addEventListener('change', function (e) { if (e.target.classList.contains('sch')) { S.run = +e.target.value; all('run'); } });
+     el.addEventListener('click', function (e) { var t = e.target; if (t.classList.contains('pl')) S.playing ? pause() : play(); if (t.classList.contains('bk')) setTick(S.t - 1); if (t.classList.contains('fw')) setTick(S.t + 1);
+       if (t.tagName === 'CANVAS') { var b = t.getBoundingClientRect(); setTick(Math.round(Math.max(0, Math.min(1, (e.clientX - b.left - 34) / Math.max(1, b.width - 68))) * run().ticks)); } }); }
+   var sc = $('.sch', el); if (k !== 'tick') sc.innerHTML = D.runs.map(function (q, i) { return '<option value="' + i + '">' + esc(q.name) + '</option>'; }).join(''); sc.value = S.run;
+   var sl = $('.sl', el); sl.max = r.ticks; sl.value = S.t; $('.tk', el).textContent = 'tick ' + S.t + ' / ' + r.ticks; $('.pl', el).textContent = S.playing ? 'Pause' : 'Play';
+   var running = MC.runningAt(r, S.t), html = '';
+   MC.nodeStatesAt(r, S.t).forEach(function (n) { var jobs = (running[n.id] || []).map(function (id) { return r._jobs[id]; }), used = jobs.reduce(function (a, j) { return a + j.cpu; }, 0), p = n.cpu ? Math.round(100 * used / n.cpu) : 0;
+     html += '<div class="m ' + n.state + '"><b>Machine ' + n.id + '</b> <span class="mute">' + n.state + '</span><div class="bar"><i style="width:' + p + '%"></i></div><div class="mute">' + used + '/' + n.cpu + ' cores (' + p + '%)</div><div class="chips">' +
+       (jobs.slice(0, 10).map(function (j) { return '<span class="chip" style="background:' + tcol(j.tenant) + '">' + j.id + ' ' + j.cpu + 'c</span>'; }).join('') + (jobs.length > 10 ? '<span class="mute">+' + (jobs.length - 10) + '</span>' : '') || '<span class="mute">idle</span>') + '</div></div>'; });
+   $('.machines', el).innerHTML = html;
+   var w = MC.waitingAt(r, S.t); $('.qt', el).textContent = 'Waiting: ' + w.length;
+   $('.q', el).innerHTML = w.slice(0, 24).map(function (id) { var j = r._jobs[id]; return '<span class="chip" style="background:' + tcol(j.tenant) + '">' + id + ' ' + j.cpu + 'c</span>'; }).join('') + (w.length > 24 ? '<span class="mute">+' + (w.length - 24) + ' more</span>' : '');
+   drawSeries($('canvas', el)); }},
+
+ {id:'compare', title:'Compare', icon:'&#8644;', x:140, y:110, w:700, h:480, render:function (el, k) {
+   if (!D) return;
+   if (!el._w) { el._w = 1; el.innerHTML = '<div style="overflow:auto;flex:none;max-height:55%" class="tb2"></div><div class="row"><label>Chart metric <select class="mt"></select></label></div><div class="chart" style="flex:1;min-height:150px"><canvas></canvas></div>';
+     el.addEventListener('click', pickRun); el.addEventListener('change', function (e) { S.metric = e.target.value; drawBars($('canvas', el)); }); }
+   $('.tb2', el).innerHTML = table(); var m = $('.mt', el); if (k === 'data' || !m.options.length) m.innerHTML = D.columns.map(function (c) { return '<option value="' + c.key + '">' + esc(c.label) + '</option>'; }).join(''); m.value = S.metric; drawBars($('canvas', el)); }},
+
+ {id:'jobs', title:'Task Manager', icon:'&#9783;', x:200, y:140, w:640, h:460, render:function (el, k) {
+   if (!D) return; var r = run();
+   if (!el._w) { el._w = 1; el.addEventListener('click', function (e) { var h = e.target.closest && e.target.closest('th'); if (h) { S.sort = h.dataset.k; all('jobs'); } });
+     el.addEventListener('change', function (e) { if (e.target.classList.contains('tn')) { S.tenant = e.target.value; all('jobs'); } }); }
+   var rows = Object.keys(r._jobs).map(function (i) { var j = r._jobs[i]; j.sd = (j.finish - j.arrival) / j.duration; j.resp = j.first - j.arrival; return j; })
+     .filter(function (j) { return S.tenant === 'all' || String(j.tenant) === S.tenant; });
+   rows.sort(function (a, b) { return S.sort === 'id' ? a.id - b.id : b[S.sort] - a[S.sort]; });
+   var cols = [['id','job'],['tenant','tenant'],['arrival','arrive'],['duration','length'],['cpu','cores'],['mem','GB'],['resp','response'],['finish','finish'],['sd','slowdown']];
+   el.innerHTML = '<div class="row"><b>' + esc(r.name) + '</b><span class="mute grow">' + rows.length + ' jobs, click a heading to sort (worst first)</span><select class="tn"><option value="all">all tenants</option>' +
+     D.tenants.map(function (t, i) { return '<option value="' + i + '"' + (S.tenant === String(i) ? ' selected' : '') + '>' + esc(t) + '</option>'; }).join('') + '</select></div><div style="overflow:auto"><table><tr>' +
+     cols.map(function (c) { return '<th data-k="' + c[0] + '">' + c[1] + (S.sort === c[0] ? ' &#9662;' : '') + '</th>'; }).join('') + '</tr>' +
+     rows.slice(0, 300).map(function (j) { return '<tr><td>' + j.id + '</td><td><span class="chip" style="background:' + tcol(j.tenant) + '">' + esc(D.tenants[j.tenant]) + '</span></td><td>' + j.arrival + '</td><td>' + j.duration + '</td><td>' + j.cpu + '</td><td>' + j.mem + '</td><td>' + j.resp + '</td><td>' + j.finish + '</td><td>' + j.sd.toFixed(2) + '</td></tr>'; }).join('') + '</table></div>'; }},
+
+ {id:'terminal', title:'Terminal', icon:'&gt;_', x:150, y:70, w:720, h:520, static:true, render:function (el) {
+   if (el._w) return; el._w = 1; var hist = [], hi = 0;
+   var quick = [['Compare','compare --workload convoy'],['Matrix','matrix'],['Gantt','gantt --workload convoy --jobs 14 --nodes 2 --scheduler rr'],['Time slice','quantum --workload bursty'],['Autoscale','autoscale --workload bursty'],['Run tests','tests'],['Stress test','stress'],['Mutation check','mutation'],['Demo tour','demo']];
+   el.innerHTML = '<div class="row">' + quick.map(function (q) { return '<button data-c="' + q[1] + '">' + q[0] + '</button>'; }).join('') + '</div><pre class="out">MiniCloudOS terminal. Type help, or press a button above.\n</pre><div class="row"><span>$</span><input class="grow" autocomplete="off" spellcheck="false" placeholder="e.g. compare --workload bursty"></div>';
+   var out = $('.out', el), inp = $('input', el), end = function () { out.scrollTop = out.scrollHeight; };
+   function go(line) { line = line.trim(); if (!line) return; hist.push(line); hi = hist.length;
+     if (line === 'clear') { out.textContent = ''; return; }
+     out.textContent += '\n$ ' + line + '\n'; if (line === 'help') { out.textContent += HELP; end(); return; }
+     fetch('/api/exec?line=' + encodeURIComponent(line)).then(function (r) { if (!r.ok) return r.text().then(function (t) { out.textContent += t + '\n'; end(); });
+       var rd = r.body.getReader(), dec = new TextDecoder();
+       return (function pump() { return rd.read().then(function (x) { if (x.done) { out.textContent += '[done]\n'; end(); return; } out.textContent += dec.decode(x.value, {stream:true}); end(); return pump(); }); })(); })
+       .catch(function (e) { out.textContent += 'error: ' + e.message + '\n'; }); }
+   el.addEventListener('click', function (e) { var c = e.target.dataset && e.target.dataset.c; if (c) go(c); });
+   inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') { go(inp.value); inp.value = ''; } else if (e.key === 'ArrowUp' && hi > 0) inp.value = hist[--hi]; else if (e.key === 'ArrowDown') inp.value = hist[++hi] || ''; }); }},
+
+ {id:'docs', title:'Docs', icon:'&#9776;', x:120, y:60, w:780, h:540, static:true, render:function (el) {
+   if (el._w) return; el._w = 1; el.style.flexDirection = 'row'; el.style.overflow = 'hidden';
+   el.innerHTML = '<div style="display:grid;gap:6px;align-content:start;flex:none">' + DOCS.map(function (n) { return '<button data-d="' + n + '">' + n + '</button>'; }).join('') + '</div><div class="doc grow"></div>';
+   var box = $('.doc', el);
+   function show(n) { [].forEach.call(el.querySelectorAll('button'), function (b) { b.classList.toggle('on', b.dataset.d === n); });
+     fetch('/api/doc?name=' + encodeURIComponent(n)).then(function (r) { return r.text(); }).then(function (t) { box.innerHTML = n === 'License' ? '<pre>' + esc(t) + '</pre>' : md(t); box.scrollTop = 0; }); }
+   el.addEventListener('click', function (e) { if (e.target.dataset && e.target.dataset.d) show(e.target.dataset.d); });
+   if (DOCS.length) show(DOCS[0]); }},
+
+ {id:'settings', title:'Settings', icon:'&#9881;', x:260, y:60, w:520, h:560, static:true, render:function (el) {
+   if (el._w) return; el._w = 1;
+   var opt = function (list, cur) { return list.map(function (v) { return '<option' + (String(v) === String(cur) ? ' selected' : '') + '>' + v + '</option>'; }).join(''); };
+   var seg = function (key, vals) { return vals.map(function (v) { return '<button data-k="' + key + '" data-v="' + v + '" class="' + (cfg[key] === v ? 'on' : '') + '">' + v + '</button>'; }).join(''); };
+   el.innerHTML = '<fieldset><legend>Appearance</legend><div class="field">Theme<div class="row">' + seg('theme', ['paper','graphite','phosphor']) + '</div></div>' +
+     '<div class="field">Accent<div class="row">' + ['#c2410c','#a16207','#4d7c0f','#1f6f78','#8a3a62','#1c1b18'].map(function (c) { return '<button class="sw ' + (cfg.accent === c ? 'on' : '') + '" data-k="accent" data-v="' + c + '" style="background:' + c + '"></button>'; }).join('') + '</div></div>' +
+     '<div class="field">Font<div class="row">' + seg('font', ['mono','sans']) + '</div></div><div class="field">Density<div class="row">' + seg('density', ['cozy','compact']) + '</div></div>' +
+     '<div class="field">Scanlines<div class="row">' + seg('scan', ['off','on']) + '</div></div></fieldset>' +
+     '<fieldset><legend>Replay</legend><div class="field">Ticks per step<select id="s-speed">' + opt([1,5,20,60], cfg.speed) + '</select></div></fieldset>' +
+     '<fieldset><legend>Simulation</legend><div class="field">Workload<select id="s-workload">' + opt(WORKLOADS, cfg.workload) + '</select></div>' +
+     '<div class="field">Machines<input id="s-nodes" type="number" min="1" max="16" value="' + cfg.nodes + '"></div><div class="field">Jobs (blank = default)<input id="s-jobs" type="number" min="5" max="2000" value="' + cfg.jobs + '"></div>' +
+     '<div class="field">Seed<input id="s-seed" type="number" min="0" value="' + cfg.seed + '"></div><div class="field">Switch cost (ticks)<input id="s-sw" type="number" min="0" max="20" value="' + cfg.sw + '"></div>' +
+     '<div class="field">Autoscale (1 to 8)<input id="s-auto" type="checkbox"' + (cfg.auto ? ' checked' : '') + '></div><div class="row"><button id="s-run">Apply &amp; re-run</button><button id="s-reset">Reset all</button></div></fieldset>' +
+     '<div class="mute">MiniCloudOS: a cloud scheduler simulator. Everything runs locally; nothing is written to disk.</div>';
+   el.addEventListener('click', function (e) { var b = e.target.closest && e.target.closest('button'); if (!b) return;
+     if (b.dataset.k) { cfg[b.dataset.k] = b.dataset.v; save(); skin(); var g = b.parentNode; [].forEach.call(g.children, function (c) { c.classList.toggle('on', c === b); }); all('skin'); }
+     if (b.id === 's-run') { cfg.speed = +$('#s-speed').value; cfg.workload = $('#s-workload').value; cfg.nodes = +$('#s-nodes').value || 4; cfg.jobs = $('#s-jobs').value; cfg.seed = +$('#s-seed').value || 0; cfg.sw = +$('#s-sw').value || 0; cfg.auto = $('#s-auto').checked; save(); load(); }
+     if (b.id === 's-reset') { cfg = Object.assign({}, DEF); save(); location.reload(); } });
+   el.addEventListener('change', function (e) { if (e.target.id === 's-speed') { cfg.speed = +e.target.value; save(); } }); }}
+];
+
+/* ---------- replay clock ---------- */
+function setTick(t) { S.t = Math.max(0, Math.min(run().ticks, t)); all('tick'); }
+function play() { S.playing = true; S.timer = setInterval(function () { if (S.t >= run().ticks) return pause(); setTick(S.t + cfg.speed); }, 120); all('tick'); }
+function pause() { S.playing = false; clearInterval(S.timer); S.timer = null; if (D) all('tick'); }
+
+/* ---------- window manager ---------- */
+var wins = {}, zTop = 10;
+function body(id) { return wins[id] && $('.body', wins[id]); }
+function all(kind) {
+  if (kind === 'run' && D) S.t = Math.min(S.t, run().ticks);
+  Object.keys(wins).forEach(function (id) { var a = APPS.filter(function (q) { return q.id === id; })[0];
+    if (kind === 'tick' && id !== 'replay') return;
+    if (kind === 'jobs' && id !== 'jobs') return;
+    if (a.static && kind !== 'resize') return;
+    a.render(body(id), kind); });
+  dock();
+}
+function focus(id) { Object.keys(wins).forEach(function (k) { wins[k].classList.toggle('on', k === id); }); wins[id].style.zIndex = ++zTop; }
+function open(id) {
+  var a = APPS.filter(function (q) { return q.id === id; })[0], w = wins[id];
+  if (w) { w.classList.remove('min'); focus(id); dock(); a.render(body(id), 'data'); return; }
+  w = document.createElement('div'); w.className = 'win'; var n = Object.keys(wins).length;
+  var small = window.innerWidth < 760; w.style.cssText = 'left:' + (a.x + n * 14) + 'px;top:' + (a.y + n * 14) + 'px;width:' + Math.min(a.w, window.innerWidth - 20) + 'px;height:' + Math.min(a.h, window.innerHeight - 90) + 'px';
+  if (small) w.classList.add('max');
+  w.innerHTML = '<div class="tb"><u class="x" title="close">&times;</u><b><span>' + a.title + '</span></b><u class="n" title="minimise">_</u><u class="z" title="maximise">&#9633;</u></div><div class="body"></div>';
+  document.body.appendChild(w); wins[id] = w;
+  w.addEventListener('pointerdown', function () { focus(id); dock(); });
+  w.querySelector('.x').onclick = function () { w.remove(); delete wins[id]; dock(); };
+  w.querySelector('.n').onclick = function () { w.classList.add('min'); dock(); };
+  w.querySelector('.z').onclick = function () { w.classList.toggle('max'); a.render(body(id), 'resize'); };
+  w.querySelector('.tb').addEventListener('dblclick', function () { w.classList.toggle('max'); });
+  w.querySelector('.tb').addEventListener('pointerdown', function (e) { if (e.target.tagName === 'U' || w.classList.contains('max')) return;
+    var ox = e.clientX - w.offsetLeft, oy = e.clientY - w.offsetTop; e.target.setPointerCapture(e.pointerId);
+    var mv = function (m) { w.style.left = Math.max(-w.offsetWidth + 80, Math.min(window.innerWidth - 80, m.clientX - ox)) + 'px'; w.style.top = Math.max(28, Math.min(window.innerHeight - 70, m.clientY - oy)) + 'px'; };
+    var up = function () { e.target.removeEventListener('pointermove', mv); e.target.removeEventListener('pointerup', up); }; e.target.addEventListener('pointermove', mv); e.target.addEventListener('pointerup', up); });
+  if (window.ResizeObserver) { var t; new ResizeObserver(function () { clearTimeout(t); t = setTimeout(function () { if (wins[id] && (id === 'replay' || id === 'compare')) a.render(body(id), 'resize'); }, 60); }).observe(w); }
+  focus(id); a.render($('.body', w), 'data'); dock();
+}
+function dock() {
+  $('#dock').innerHTML = APPS.map(function (a) { var w = wins[a.id]; return '<button data-app="' + a.id + '" class="' + (w ? 'open ' : '') + (w && w.classList.contains('on') && !w.classList.contains('min') ? 'on' : '') + '">' + a.icon + ' ' + a.title + '</button>'; }).join('');
+}
+$('#dock').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; var id = b.dataset.app, w = wins[id];
+  if (w && w.classList.contains('on') && !w.classList.contains('min')) { w.classList.add('min'); dock(); } else open(id); });
+$('#icons').innerHTML = APPS.map(function (a) { return '<div class="icon" data-app="' + a.id + '"><i>' + a.icon + '</i><span>' + a.title + '</span></div>'; }).join('');
+$('#icons').addEventListener('dblclick', function (e) { var i = e.target.closest('.icon'); if (i) open(i.dataset.app); });
+$('#icons').addEventListener('click', function (e) { var i = e.target.closest('.icon'); if (i && 'ontouchstart' in window) open(i.dataset.app); });
+$('#logo').addEventListener('click', function (e) { e.stopPropagation(); var m = $('#menu'); m.style.display = m.style.display === 'block' ? 'none' : 'block';
+  m.innerHTML = APPS.map(function (a) { return '<div data-app="' + a.id + '">' + a.icon + ' ' + a.title + '</div>'; }).join('') + '<hr><div data-act="rerun">&#8635; Re-run simulation</div>'; });
+$('#menu').addEventListener('click', function (e) { var d = e.target.closest('div[data-app],div[data-act]'); if (!d) return; if (d.dataset.app) open(d.dataset.app); else load(); });
+document.addEventListener('click', function () { $('#menu').style.display = 'none'; });
+function tick() { var d = new Date(); $('#clock').textContent = d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}); } tick(); setInterval(tick, 20000);
+
+skin(); dock();
+open('welcome'); load();
+})();
+</script>
+</body>
+</html>
